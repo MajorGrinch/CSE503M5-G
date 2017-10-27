@@ -1,5 +1,6 @@
 #calendar{
 	font-family: 'Times New Roman', Times, serif;
+	font-size: 12px;
 }
 
 #calendar_op{
@@ -15,7 +16,8 @@
 
 #wrapper{
 	width: 85%;
-	margin-left: 15%;
+	margin-left: 12%;
+	margin-bottom: 5%;
 }
 
 #sidebar{
@@ -24,17 +26,24 @@
 	top: 10%;
 	left: 1%;
 	text-align: center;
+
 }
 
 #calendar_table{
-	width: 100%;
+	width:96%;
+	margin: auto;
+	
 }
 
 #calendar_table th, td{
 	border: 1px solid black;
 	border-spacing: 5px;
+
 }
 
 #calendar_table td{
-	height: 140px;
+	height: 100px;
+
+
+
 }

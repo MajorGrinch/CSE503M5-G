@@ -51,13 +51,13 @@ session_start();
             <div id="calendar">
                 <table id="calendar_table">
                     <thead>
-                        <th>Sun</th>
-                        <th>Mon</th>
-                        <th>Tue</th>
-                        <th>Wed</th>
-                        <th>Thu</th>
-                        <th>Fri</th>
-                        <th>Sat</th>
+                        <th width="14%" >Sun</th>
+                        <th width="14%" abbr="">Mon</th>
+                        <th width="14%">Tue</th>
+                        <th width="14%">Wed</th>
+                        <th width="14%">Thu</th>
+                        <th width="14%">Fri</th>
+                        <th width="14%">Sat</th>
                     </thead>
                     <tbody id="calendar_table_body">
                     </tbody>
