@@ -8,13 +8,13 @@ if(!isset($_SESSION['user'])){
 $username = $_SESSION['user'];
 $userid = (int)$_SESSION['userid'];
 
-$stmt = $mysqli->prepare("select title, eve_date, eve_content from events where userid=?");
-$stmt->bind_param("i", $userid);
+$stmt = $mysqli->prepare("select eve_id, title, eve_date from events where userid=?");
+
 if (!$stmt) {
     printf("Query Prep Failed: %s\n", $mysqli->error);
     exit;
 }
-
+$stmt->bind_param("i", $userid);
 if($stmt->execute()){
 	$result = $stmt->get_result();
 	$result_array = array();

@@ -25,3 +25,16 @@
 	left: 1%;
 	text-align: center;
 }
+
+#calendar_table{
+	width: 100%;
+}
+
+#calendar_table th, td{
+	border: 1px solid black;
+	border-spacing: 5px;
+}
+
+#calendar_table td{
+	height: 140px;
+}
