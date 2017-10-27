@@ -191,7 +191,61 @@ session_start();
             </div>
         </div>
     </div>
+    <!-- Modal -->
+    <div class="modal fade" id="view_event_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="view_event_modal_title">Event Detail</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="view_event_modal_body">
+                    <label for="view_event_title" class="control-label">Title: </label>
+                    <p id="view_event_title"></p>
+                    <label for="view_event_content" class="control-label">Content:</label>
+                    <p id="view_event_content"></p>
+                    <label for="view_event_time" class="control-label">When: </label>
+                    <p id="view_event_time"></p>
+                    <input type="hidden" id="current_event_id">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="toggle_edit_event">Edit</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script type="text/javascript">
+
+    $('#edit_event_btn').click(function(){
+        var eve_title = $('#edit_event_title').val();
+        var eve_content = $('#edit_event_content').val();
+        var eve_date = $('#edit_current_date').val();
+        var eve_hour = $('#edit_event_time_hour').val();
+        var eve_minute = $('#edit_event_time_minute').val();
+        var eve_id = $('#edit_event_id').val();
+        var date_str = eve_date + ' ' + eve_hour + ':' + eve_minute;
+        console.log(date_str);
+        $.post("editSpecEvent.php", 
+                {
+                    eve_title: eve_title,
+                    eve_content: eve_content,
+                    eve_date: date_str,
+                    eve_id: eve_id
+                })
+        .done(function(data){
+            // console.log(data);
+            var jsonobj = jQuery.parseJSON(data);
+            if(jsonobj['status']=='success'){
+                alert('Edit Successfully!');
+                $('#edit_event_modal').modal('hide');
+                clearTable();
+                initUserEvents();
+            }
+        });
+    });
 
     $('#del_event_btn').click(function(){
         var eve_id = $('#edit_event_id').val();
@@ -210,12 +264,44 @@ session_start();
 
     $('#calendar_table_body').on('click', '.list-group-item', function(){
         console.log("click li");
-        $('#edit_event_modal').modal('show');
+        // $('#view_event_modal').modal('show');
+        // $('#edit_event_modal').modal('show');
         var eve_id = $(this).attr('val');
         // console.log($(this).attr('val'));
         $.post("getSpecEvent.php", {eve_id: eve_id})
         .done(function(data){
-            // console.log(data);
+            console.log(data);
+            var jsonobj = jQuery.parseJSON(data);
+            var eve_item = jsonobj[0];
+            // $('#edit_event_title').val(eve_item['title']);
+            // $('#edit_event_content').val(eve_item['eve_content']);
+            var momentDate = moment(eve_item['eve_date'], 'YYYY-MM-DD HH:mm:ss');
+            var jsdate = momentDate.toDate();
+            var date_str = eve_item['eve_date'].split(' ')[0];
+            console.log(date_str);
+            console.log(jsdate.getMonth());
+            // innerstr = eve_item['title'] + eve_item['eve_content'];
+            $('#view_event_title').text(eve_item['title']);
+            $('#view_event_content').text(eve_item['eve_content']);
+            $('#view_event_time').text(date_str);
+            $('#current_event_id').val(eve_item['eve_id']);
+            $('#view_event_modal').modal('show');
+            // $('#edit_event_time_hour').val(jsdate.getHours());
+            // $('#edit_event_time_minute').val(jsdate.getMinutes());
+            // $('#edit_current_date').val(date_str);
+            // $('#edit_event_id').val(eve_item['eve_id']);
+            // $('#edit_event_modal').modal('hide');
+        })
+    });
+
+    $('#toggle_edit_event').click(function(){
+        $('#view_event_modal').modal('hide');
+        // $('#edit_event_modal').modal('show');
+        var eve_id = $('#current_event_id').val(); 
+        console.log('eve_id' + eve_id);
+        $.post("getSpecEvent.php", {eve_id: eve_id})
+        .done(function(data){
+            console.log(data);
             var jsonobj = jQuery.parseJSON(data);
             var eve_item = jsonobj[0];
             $('#edit_event_title').val(eve_item['title']);
@@ -234,30 +320,30 @@ session_start();
     });
 
     $("#add_event_btn").click(function(){
-    var eve_title = $("#event_title").val();
-    var eve_content = $("#event_content").val();
-    var eve_hour = $("#event_time_hour").val();
-    var eve_minute = $("#event_time_minute").val();
-    var eve_date = $("#current_date").attr('placeholder');
-    var date_str = eve_date + ' ' + eve_hour + ':' + eve_minute;
-    console.log(date_str);
-    $.post("addEvent.php",
-            {
-                event_title: eve_title,
-                event_content: eve_content,
-                event_datetime: date_str
-            })
-        .done(function(data){
-            console.log(data);
-            var jsonobj = jQuery.parseJSON(data);
-            if(jsonobj['status'] == "success"){
-                alert("Add Event Successfully!");
-                $('#add_event_modal').modal('hide');
-                // rebuildTable();
-                clearTable();
-                initUserEvents();
-            }
-        });
+        var eve_title = $("#event_title").val();
+        var eve_content = $("#event_content").val();
+        var eve_hour = $("#event_time_hour").val();
+        var eve_minute = $("#event_time_minute").val();
+        var eve_date = $("#current_date").attr('placeholder');
+        var date_str = eve_date + ' ' + eve_hour + ':' + eve_minute;
+        console.log(date_str);
+        $.post("addEvent.php",
+                {
+                    event_title: eve_title,
+                    event_content: eve_content,
+                    event_datetime: date_str
+                })
+            .done(function(data){
+                console.log(data);
+                var jsonobj = jQuery.parseJSON(data);
+                if(jsonobj['status'] == "success"){
+                    alert("Add Event Successfully!");
+                    $('#add_event_modal').modal('hide');
+                    // rebuildTable();
+                    clearTable();
+                    initUserEvents();
+                }
+            });
     });
 
 
@@ -364,18 +450,24 @@ session_start();
     function initUserEvents(){
         $.get("getUserEvents.php")
             .done(function(data){
-                console.log(data);
+                // console.log(data);
                 var jsonobj = jQuery.parseJSON(data);
                 if(jsonobj != "login" && jsonobj != "Query Failed"){
                     jsonobj.forEach(function(eve_item){
                         var momentDate = moment(eve_item['eve_date'], 'YYYY-MM-DD HH:mm:ss');
                         var jsDate = momentDate.toDate();
                         var index = findIndex(jsDate);
+                        var hour = jsDate.getHours();
+                        var minute = jsDate.getMinutes();
+                        if( minute < 10 ){
+                            minute = '0' + minute;
+                        }
+                        var time_str = hour + ':' + minute;
                         var rowIndex = Math.floor(index / 7)+1;
                         var colIndex = index % 7;
                         var daily_events = $("#calendar_table tr").eq(rowIndex).find('td').eq(colIndex).find("div").find("ul");
                         // console.log(daily_events);
-                        daily_events.append('<li class="list-group-item" val="'+ eve_item['eve_id'] +'">'+ eve_item['title'] +'</li>')
+                        daily_events.append('<li class="list-group-item" val="'+ eve_item['eve_id'] +'">'+ time_str + ' ' + eve_item['title'] +'</li>')
                     })
                 }
             });
