@@ -212,12 +212,74 @@ session_start();
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="toggle_share_event">Share</button>
                     <button type="button" class="btn btn-primary" id="toggle_edit_event">Edit</button>
                 </div>
             </div>
         </div>
     </div>
+    <div class="modal fade" id="share_event_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Share Event</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="view_event_modal_body">
+                    <form id="share_event_form">
+                        <div class="form-group">
+                            <label for="event_date" class="control-label">Date: </label>
+                            <select class="form-control" id="share_to_user"></select>
+                            <input type="hidden" id="shared_event_id">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="share_event_btn">Share</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script type="text/javascript">
+
+    $('#share_event_btn').click(function(){
+        var shared_username = $('#share_to_user').val();
+        console.log(shared_username);
+        var shared_usreid = $('#share_to_user').find(':selected').attr('val');
+        var shared_eve_id = $('#shared_event_id').val();
+        console.log(shared_eve_id);
+        $.post("shareEvent.php", {eve_id:shared_eve_id, dst_userid: shared_usreid})
+        .done(function(data){
+            console.log(data);
+            var jsonobj = jQuery.parseJSON(data);
+            if(jsonobj['status'] ==  "success"){
+                alert('Share successfully!!');
+            }
+        });
+        $('#share_event_modal').modal('hide');
+    });
+
+    $('#toggle_share_event').click(function(){
+        var eve_id = $('#current_event_id').val(); 
+        console.log("toggle_share_event: " + eve_id);
+        $.get("getUserList.php")
+        .done(function(data){
+            console.log(data);
+            var jsonobj = jQuery.parseJSON(data);
+            jsonobj.forEach(function(user_item){
+                console.log(user_item);
+                var option = $('<option></option>').text(user_item['username']);
+                option.attr({'val': user_item['userid']});
+                $('#share_to_user').append(option);
+            });
+        });
+        $('#shared_event_id').val(eve_id);
+        $('#share_event_modal').modal('show');
+        $('#view_event_modal').modal('hide');
+    });
 
     $('#edit_event_btn').click(function(){
         var eve_title = $('#edit_event_title').val();
@@ -346,7 +408,7 @@ session_start();
             });
     });
 
-
+  
 
     $("#calendar_table_body").on('dblclick', '.mytd', function(){
         // console.log('click on td');
