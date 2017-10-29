@@ -15,6 +15,7 @@ session_start();
     <link rel="stylesheet" type="text/css" href="css/calendar.css">
     <script src="js/moment.min.js"></script>
     <script src="js/tether.min.js"></script>
+
 </head>
 
 <body>
@@ -136,12 +137,19 @@ session_start();
                             <label for="current_date" class="control-label">Date: </label>
                             <input class="form-control" type="text" placeholder="Readonly input here…" readonly id="current_date">
                         </div>
+                        <div class="form-group">
+                            <label for="group_event_with" class="control-label">With: (ignore this if it's not a group event)</label>
+                            <select multiple class="form-control" id="group_event_with"></select>
+                        </div>
+<!--                         <div class="form-group">
+                            <button class="btn btn-success" id="choose_event_place_btn">Choose a place</button>
+                        </div> -->
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" id="add_event_btn">Add Event</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
+                </div> 
             </div>
         </div>
     </div>
@@ -267,7 +275,80 @@ session_start();
             </div>
         </div>
     </div>
+    <div class="modal fade" id="choose_event_place_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Share Event</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="choose_event_place_body">
+                    <div id="map"></div>
+                            <!-- <input type="hidden" id="shared_event_id"> -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="share_event_btn">Choose</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // This example requires the Places library. Include the libraries=places
+    // parameter when you first load the API. For example:
+    // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+    var map;
+    var infowindow;
+
+    function initMap() {
+        var pyrmont = { lat: -33.867, lng: 151.195 };
+
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: pyrmont,
+            zoom: 15
+        });
+
+        infowindow = new google.maps.InfoWindow();
+        var service = new google.maps.places.PlacesService(map);
+        service.nearbySearch({
+            location: pyrmont,
+            radius: 500,
+            type: ['store']
+        }, callback);
+    }
+
+    function callback(results, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+            for (var i = 0; i < results.length; i++) {
+                createMarker(results[i]);
+            }
+        }
+    }
+
+    function createMarker(place) {
+        var placeLoc = place.geometry.location;
+        var marker = new google.maps.Marker({
+            map: map,
+            position: place.geometry.location
+        });
+
+        google.maps.event.addListener(marker, 'click', function() {
+            infowindow.setContent(place.name);
+            infowindow.open(map, this);
+        });
+    }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHPr9Sea5pe5xafX5R-fPFNsUXnOOVX-0&libraries=places&callback=initMap" async defer></script>
     <script type="text/javascript">
+
+    $('#choose_event_place_btn').click(function(){
+        console.log('click choose map');
+        $('#choose_event_place_modal').modal('show');
+    });
 
     $('#share_event_btn').click(function(){
         var shared_username = $('#share_to_user').val();
@@ -434,27 +515,75 @@ session_start();
         var eve_hour = $("#event_time_hour").val();
         var eve_minute = $("#event_time_minute").val();
         var eve_date = $("#current_date").attr('placeholder');
+        var group_with = $('#group_event_with').find(':selected');
+        var is_group = 0;
+        // var group_with_val = $('#group_event_with').val();
+        // console.log("group_with_val: " + group_with_val);
         var date_str = eve_date + ' ' + eve_hour + ':' + eve_minute;
-        console.log(date_str);
+        if(group_with.length > 0){
+            is_group = 1;
+        }
         $.post("addEvent.php",
                 {
                     event_title: eve_title,
                     event_content: eve_content,
-                    event_datetime: date_str
+                    event_datetime: date_str,
+                    is_group: is_group
                 })
-            .done(function(data){
-                console.log(data);
-                var jsonobj = jQuery.parseJSON(data);
-                if(jsonobj['status'] == "success"){
-                    alert("Add Event Successfully!");
-                    $('#add_event_modal').modal('hide');
-                    // rebuildTable();
-                    clearTable();
-                    initUserEvents();
+        .done(function(data){
+            console.log(data);
+            var jsonobj = jQuery.parseJSON(data);
+            if(jsonobj['status'] == "success"){
+                alert("Add Event Successfully!");
+                var eve_id = jsonobj['eve_id'];
+                console.log(eve_id);
+                var group_success = 1;
+                if(is_group == 1){
+                    for(var i = 0; i < group_with.length; i++){
+                        console.log(group_with[i].value);
+                        var dst_userid = group_with[i].value;
+                        $.post("shareEvent.php",
+                                {
+                                    eve_id: eve_id,
+                                    dst_userid: dst_userid
+                                })
+                        .done(function(dat){
+                            var jsobj = jQuery.parseJSON(dat)
+                            if(jsobj['status'] != 'success'){
+                                group_success = 0;
+                            }
+                        });
+                    }
+                    if(group_success == 0){
+                        alert('Group failed! Something wrong!');
+                    }
                 }
-            });
+                // rebuildTable();
+                clearTable();
+                initUserEvents();
+            }
+        });
+        $('#add_event_modal').modal('hide');
+        console.log(date_str);
+
     });
 
+    $('#add_event_modal').on('show.bs.modal', function(e){
+        $.get('getUserList.php ')
+        .done(function(data){
+            // console.log(data);
+            var jsonobj = jQuery.parseJSON(data);
+            jsonobj.forEach(function(user){
+                var option = $('<option></option>').text(user['username']);
+                option.attr({'value': user['userid']});
+                $('#group_event_with').append(option);
+            });
+        });
+    });
+
+    $('#add_event_modal').on('hide.bs.modal', function(e){
+        $('#group_event_with').empty();
+    });
   
 
     $("#calendar_table_body").on('dblclick', '.mytd', function(){
@@ -580,7 +709,7 @@ session_start();
                     });
                 }
             });
-        $.post("getSharedEvents.php")
+        $.get("getSharedEvents.php")
         .done(function(data){
             var jsonobj = jQuery.parseJSON(data);
             if(jsonobj != "login" && jsonobj != "Query Failed"){
@@ -603,6 +732,28 @@ session_start();
             }
         });
 
+        $.get("getGroupEvents.php")
+        .done(function(data){
+            var jsonobj = jQuery.parseJSON(data);
+            if(jsonobj != "login" && jsonobj != "Query Failed"){
+                jsonobj.forEach(function(eve_item){
+                    var momentDate = moment(eve_item['eve_date'], 'YYYY-MM-DD HH:mm:ss');
+                    var jsDate = momentDate.toDate();
+                    var index = findIndex(jsDate);
+                    var hour = jsDate.getHours();
+                    var minute = jsDate.getMinutes();
+                    if( minute < 10 ){
+                        minute = '0' + minute;
+                    }
+                    var time_str = hour + ':' + minute;
+                    var rowIndex = Math.floor(index / 7)+1;
+                    var colIndex = index % 7;
+                    var daily_events = $("#calendar_table tr").eq(rowIndex).find('td').eq(colIndex).find("div").find("ul");
+                        // console.log(daily_events);
+                    daily_events.append('<li class="list-group-item" val="'+ eve_item['eve_id'] +'">'+ time_str + ' ' + eve_item['title'] +' launch by '+ eve_item['username'] +'</li>');
+                });
+            }
+        });
     }
 
     </script>
@@ -641,6 +792,7 @@ session_start();
 
     $('#pre_mon').click(function() {
         current_month = current_month.prevMonth();
+        console.log(current_month);
         console.log(current_month);
         updateCalendar();
         initUserEvents();
