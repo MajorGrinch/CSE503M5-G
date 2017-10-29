@@ -2,6 +2,14 @@
 ini_set("session.cookie_httponly", 1);
 session_start();
 require 'database.php';
+$previous_ua = @$_SESSION['useragent'];
+$current_ua = $_SERVER['HTTP_USER_AGENT'];
+
+if(isset($_SESSION['useragent']) && $previous_ua !== $current_ua){
+	die("Session hijack detected");
+}else{
+	$_SESSION['useragent'] = $current_ua;
+}
 if(!isset($_SESSION['userid'])){
 	print(json_encode("login"));
 	exit;
@@ -21,6 +29,7 @@ if($stmt->execute()){
 	$result_array = array();
 	while( $row = $result->fetch_assoc()){
 		array_push($result_array, $row);
+		// var_dump($row);
 	}
 	print(json_encode($result_array));
 }

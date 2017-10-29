@@ -1,6 +1,14 @@
 <?php
 ini_set("session.cookie_httponly", 1);
 session_start();
+$previous_ua = @$_SESSION['useragent'];
+$current_ua = $_SERVER['HTTP_USER_AGENT'];
+
+if(isset($_SESSION['useragent']) && $previous_ua !== $current_ua){
+    die("Session hijack detected");
+}else{
+    $_SESSION['useragent'] = $current_ua;
+}
 require 'database.php';
 
 if (isset($_POST['eve_id']) && isset($_SESSION['userid']) && isset($_POST['eve_title']) && isset($_POST['eve_content']) && isset($_POST['eve_date']) && isset($_POST['lat']) && isset($_POST['lng'])) {
