@@ -1,9 +1,32 @@
-var latitude = 0.0;
-var longitude = 0.0;
+var url = location.href;
+console.log(url);
+data = {}
+if (url.indexOf('?') > -1) {
+    var params = location.href.split('?')[1].split('&');
+    data = {};
+    for (x in params) {
+        data[params[x].split('=')[0]] = params[x].split('=')[1];
+    }
+}
+else{
+    data['lat'] = 0.0;
+    data['lng'] = 0.0;
+}
+
+console.log('temp.html');
+console.log(data);
+
+var latitude = parseFloat(data['lat']),
+    longitude = parseFloat(data['lng']);
+
 function initMap() {
     var map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: -33.8688, lng: 151.2195 },
-        zoom: 13
+        center: { lat: parseFloat(data['lat']), lng: parseFloat(data['lng']) },
+        zoom: 16
+    });
+    var tmep_marker = new google.maps.Marker({
+        map: map,
+        position: { lat: parseFloat(data['lat']), lng: parseFloat(data['lng']) }
     });
     var card = document.getElementById('pac-card');
     var input = document.getElementById('pac-input');

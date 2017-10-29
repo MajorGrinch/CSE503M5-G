@@ -9,7 +9,7 @@ session_start();
     <title>KM Calendar</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
     <script src="js/jquery-3.2.1.js"></script>
-    <script src="js/calendar.js"></script>
+    <script src="js/calendar.js"></script>. 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="css/calendar.css">
@@ -152,7 +152,7 @@ session_start();
             </div>
         </div>
     </div>
-    <div class="modal fade" id="edit_event_modal">
+    <div class="modal fade" id="edit_event_modal" aria-labelledby="exampleModalLongTitle" aria-hidden="true" role="dialog" tabindex="-1">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -188,6 +188,7 @@ session_start();
                             <input class="form-control" type="text" placeholder="Readonly input here…" readonly id="edit_current_date">
                             <input type="hidden" id="edit_event_id">
                         </div>
+                        <div id="edit_event_place"></div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -242,6 +243,7 @@ session_start();
                     <p id="view_shared_event_content"></p>
                     <label for="view_shared_event_time" class="control-label">When: </label>
                     <p id="view_shared_event_time"></p>
+                    <div id="view_shared_event_place"></div>
                     <!-- <input type="hidden" id="current_event_id"> -->
                 </div>
                 <div class="modal-footer">
@@ -317,6 +319,10 @@ session_start();
     $('#view_event_modal').on('hidden.bs.modal', function(e){
         $('#view_event_place').empty();
     });
+
+    $('#view_shared_event_modal').on('hidden.bs.modal', function(e){
+        $('#view_shared_event_place').empty();
+    });
     $('#toggle_choose_event_place').click(function(){
         console.log('click choose map');
         $('#choose_event_place_modal').modal('show');
@@ -373,15 +379,21 @@ session_start();
         var eve_id = $('#edit_event_id').val();
         var date_str = eve_date + ' ' + eve_hour + ':' + eve_minute;
         console.log(date_str);
+        latitude = document.getElementById('edit_event_place_iframe').contentWindow.latitude;
+        longitude = document.getElementById('edit_event_place_iframe').contentWindow.longitude;
+        console.log(latitude);
+        console.log(longitude);
         $.post("editSpecEvent.php", 
                 {
                     eve_title: eve_title,
                     eve_content: eve_content,
                     eve_date: date_str,
-                    eve_id: eve_id
+                    eve_id: eve_id,
+                    lat: latitude,
+                    lng: longitude
                 })
         .done(function(data){
-            // console.log(data);
+            console.log(data);
             var jsonobj = jQuery.parseJSON(data);
             if(jsonobj['status']=='success'){
                 alert('Edit Successfully!');
@@ -418,11 +430,9 @@ session_start();
         var lng = $(this).attr('lng');
         console.log(lat);
         console.log(lng);
-        var iframe = $("<iframe id='view_event_place_iframe' src='specLocation.html?lat="+lat+"&lng="+lng+"' width='100%' height='400px'></iframe>");
-        $('#view_event_place').append(iframe);
         // console.log($(this).attr('val'));
-        if(is_shared == 'shared'){
-            console.log('true');
+        if(is_shared == 'shared' || is_shared=='group'){
+            console.log(is_shared);
             $.post("getSpecEvent.php", {eve_id: eve_id})
             .done(function(data){
                 console.log(data);
@@ -437,6 +447,8 @@ session_start();
                 $('#view_shared_event_title').text(eve_item['title']);
                 $('#view_shared_event_content').text(eve_item['eve_content']);
                 $('#view_shared_event_time').text(date_str);
+                var iframe = $("<iframe id='view_shared_event_place_iframe' src='specLocation.html?lat="+lat+"&lng="+lng+"' width='100%' height='450px' align='middle'></iframe>");
+                $('#view_shared_event_place').append(iframe);
                 $('#view_shared_event_modal').modal('show');
             });
         }
@@ -453,6 +465,8 @@ session_start();
                 console.log(date_str);
                 console.log(jsdate.getMonth());
                 // innerstr = eve_item['title'] + eve_item['eve_content'];
+                var iframe = $("<iframe id='view_event_place_iframe' src='specLocation.html?lat="+lat+"&lng="+lng+"' width='100%' height='450px' align='middle'></iframe>");
+                $('#view_event_place').append(iframe);
                 $('#view_event_title').text(eve_item['title']);
                 $('#view_event_content').text(eve_item['eve_content']);
                 $('#view_event_time').text(date_str);
@@ -470,7 +484,7 @@ session_start();
         console.log('eve_id' + eve_id);
         $.post("getSpecEvent.php", {eve_id: eve_id})
         .done(function(data){
-            console.log(data);
+            // console.log(data);
             var jsonobj = jQuery.parseJSON(data);
             var eve_item = jsonobj[0];
             $('#edit_event_title').val(eve_item['title']);
@@ -478,14 +492,23 @@ session_start();
             var momentDate = moment(eve_item['eve_date'], 'YYYY-MM-DD HH:mm:ss');
             var jsdate = momentDate.toDate();
             var date_str = eve_item['eve_date'].split(' ')[0];
-            console.log(date_str);
-            console.log(jsdate.getMonth());
+            // console.log(date_str);
+            // console.log(jsdate.getMonth());
+            var lat = eve_item['latitude'];
+            var lng = eve_item['longitude'];
+            console.log(lat);
             $('#edit_event_time_hour').val(jsdate.getHours());
             $('#edit_event_time_minute').val(jsdate.getMinutes());
             $('#edit_current_date').val(date_str);
             $('#edit_event_id').val(eve_item['eve_id']);
+            var iframe = $("<iframe id='edit_event_place_iframe' src='temp.html?lat="+lat+"&lng="+lng+"' width='100%' height='350px' align='middle'></iframe>");
+            $('#edit_event_place').append(iframe);
             $('#edit_event_modal').modal('show');
-        })
+        });
+    });
+
+    $('#edit_event_modal').on('hidden.bs.modal', function(e){
+        $('#edit_event_place').empty();
     });
 
     $("#add_event_btn").click(function(){
@@ -658,14 +681,6 @@ session_start();
         });
     }
 
-    // function rebuildTable(){
-    //     $("#calendar_table").empty();
-    //     $("#calendar_table").append('<thead><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></thead><tbody id="calendar_table_body"></tbody>');
-    //     initCalendar();
-    //     updateCalendar();
-    //     // addClickEvent_Td();
-    // }
-
     function initUserEvents(){
         $.get("getUserEvents.php")
             .done(function(data){
@@ -686,7 +701,7 @@ session_start();
                         var colIndex = index % 7;
                         var daily_events = $("#calendar_table tr").eq(rowIndex).find('td').eq(colIndex).find("div").find("ul");
                         // console.log(daily_events);
-                        daily_events.append('<li class="list-group-item" val="'+ eve_item['eve_id'] +'" lat="'+eve_item['latitude']+'" lng="'+eve_item['longitude']+'">'+ time_str + ' ' + eve_item['title'] +'</li>')
+                        daily_events.append('<li class="list-group-item" val="'+ eve_item['eve_id'] +'" lat="'+eve_item['latitude']+'" lng="'+eve_item['longitude']+'">'+ time_str + ' ' + eve_item['title'] +'</li>');
                     });
                 }
             });
@@ -707,8 +722,7 @@ session_start();
                     var rowIndex = Math.floor(index / 7)+1;
                     var colIndex = index % 7;
                     var daily_events = $("#calendar_table tr").eq(rowIndex).find('td').eq(colIndex).find("div").find("ul");
-                        // console.log(daily_events);
-                    daily_events.append('<li name="shared" class="list-group-item" val="'+ eve_item['eve_id'] +'">'+ time_str + ' ' + eve_item['title'] +' shared by '+ eve_item['username'] +'</li>');
+                    daily_events.append('<li name="shared" class="list-group-item" val="'+ eve_item['eve_id'] +'" lat="'+eve_item['latitude']+'" lng="'+eve_item['longitude']+'">'+ time_str + ' ' + eve_item['title'] + ' shared by ' + eve_item['username'] +'</li>');
                 });
             }
         });
@@ -730,8 +744,8 @@ session_start();
                     var rowIndex = Math.floor(index / 7)+1;
                     var colIndex = index % 7;
                     var daily_events = $("#calendar_table tr").eq(rowIndex).find('td').eq(colIndex).find("div").find("ul");
-                        // console.log(daily_events);
-                    daily_events.append('<li class="list-group-item" val="'+ eve_item['eve_id'] +'">'+ time_str + ' ' + eve_item['title'] +' launch by '+ eve_item['username'] +'</li>');
+                    daily_events.append('<li name="group" class="list-group-item" val="'+ eve_item['eve_id'] +'" lat="'+eve_item['latitude']+'" lng="'+eve_item['longitude']+'">'+ time_str + ' ' + eve_item['title']+ ' with ' + eve_item['username'] +'</li>');
+
                 });
             }
         });
