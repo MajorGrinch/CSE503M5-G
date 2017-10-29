@@ -15,7 +15,6 @@ session_start();
     <link rel="stylesheet" type="text/css" href="css/calendar.css">
     <script src="js/moment.min.js"></script>
     <script src="js/tether.min.js"></script>
-
 </head>
 
 <body>
@@ -141,9 +140,9 @@ session_start();
                             <label for="group_event_with" class="control-label">With: (ignore this if it's not a group event)</label>
                             <select multiple class="form-control" id="group_event_with"></select>
                         </div>
-<!--                         <div class="form-group">
-                            <button class="btn btn-success" id="choose_event_place_btn">Choose a place</button>
-                        </div> -->
+                        <div class="form-group">
+                            <button type="button" class="btn btn-success" id="toggle_choose_event_place">Choose a place</button>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -216,6 +215,7 @@ session_start();
                     <p id="view_event_content"></p>
                     <label for="view_event_time" class="control-label">When: </label>
                     <p id="view_event_time"></p>
+                    <div id="view_event_place"></div>
                     <input type="hidden" id="current_event_id">
                 </div>
                 <div class="modal-footer">
@@ -279,75 +279,49 @@ session_start();
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Share Event</h5>
+                    <h5 class="modal-title">Choose a place</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body" id="choose_event_place_body">
                     <div id="map"></div>
-                            <!-- <input type="hidden" id="shared_event_id"> -->
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" id="share_event_btn">Choose</button>
+                    <button type="button" class="btn btn-success" id="choose_event_place_btn">Choose</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-    // This example requires the Places library. Include the libraries=places
-    // parameter when you first load the API. For example:
-    // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
 
-    var map;
-    var infowindow;
-
-    function initMap() {
-        var pyrmont = { lat: -33.867, lng: 151.195 };
-
-        map = new google.maps.Map(document.getElementById('map'), {
-            center: pyrmont,
-            zoom: 15
-        });
-
-        infowindow = new google.maps.InfoWindow();
-        var service = new google.maps.places.PlacesService(map);
-        service.nearbySearch({
-            location: pyrmont,
-            radius: 500,
-            type: ['store']
-        }, callback);
-    }
-
-    function callback(results, status) {
-        if (status === google.maps.places.PlacesServiceStatus.OK) {
-            for (var i = 0; i < results.length; i++) {
-                createMarker(results[i]);
-            }
-        }
-    }
-
-    function createMarker(place) {
-        var placeLoc = place.geometry.location;
-        var marker = new google.maps.Marker({
-            map: map,
-            position: place.geometry.location
-        });
-
-        google.maps.event.addListener(marker, 'click', function() {
-            infowindow.setContent(place.name);
-            infowindow.open(map, this);
-        });
-    }
-    </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHPr9Sea5pe5xafX5R-fPFNsUXnOOVX-0&libraries=places&callback=initMap" async defer></script>
     <script type="text/javascript">
 
+    var latitude = 0.0;
+    var longitude = 0.0;
+
+
     $('#choose_event_place_btn').click(function(){
+        latitude = document.getElementById('map_if').contentWindow.latitude;
+        longitude = document.getElementById('map_if').contentWindow.longitude;
+        console.log(latitude);
+        console.log(longitude);
+        $('#choose_event_place_modal').modal('hide');
+    });
+
+    $('#choose_event_place_modal').on('hidden.bs.modal', function(e){
+        $('#map').empty();
+    });
+
+    $('#view_event_modal').on('hidden.bs.modal', function(e){
+        $('#view_event_place').empty();
+    });
+    $('#toggle_choose_event_place').click(function(){
         console.log('click choose map');
         $('#choose_event_place_modal').modal('show');
+        var iframe = $("<iframe id='map_if' src='temp.html' width='100%' height='100%'></iframe>");
+        $('#map').append(iframe);
     });
 
     $('#share_event_btn').click(function(){
@@ -440,6 +414,12 @@ session_start();
         var eve_id = $(this).attr('val');
         // console.log("name: " + is_shared);
         var is_shared = $(this).attr('name');
+        var lat = $(this).attr('lat');
+        var lng = $(this).attr('lng');
+        console.log(lat);
+        console.log(lng);
+        var iframe = $("<iframe id='view_event_place_iframe' src='specLocation.html?lat="+lat+"&lng="+lng+"' width='100%' height='400px'></iframe>");
+        $('#view_event_place').append(iframe);
         // console.log($(this).attr('val'));
         if(is_shared == 'shared'){
             console.log('true');
@@ -457,7 +437,6 @@ session_start();
                 $('#view_shared_event_title').text(eve_item['title']);
                 $('#view_shared_event_content').text(eve_item['eve_content']);
                 $('#view_shared_event_time').text(date_str);
-                // $('#current_event_id').val(eve_item['eve_id']);
                 $('#view_shared_event_modal').modal('show');
             });
         }
@@ -528,7 +507,9 @@ session_start();
                     event_title: eve_title,
                     event_content: eve_content,
                     event_datetime: date_str,
-                    is_group: is_group
+                    is_group: is_group,
+                    latitude: latitude,
+                    longitude: longitude
                 })
         .done(function(data){
             console.log(data);
@@ -688,7 +669,7 @@ session_start();
     function initUserEvents(){
         $.get("getUserEvents.php")
             .done(function(data){
-                // console.log(data);
+                console.log(data);
                 var jsonobj = jQuery.parseJSON(data);
                 if(jsonobj != "login" && jsonobj != "Query Failed"){
                     jsonobj.forEach(function(eve_item){
@@ -705,7 +686,7 @@ session_start();
                         var colIndex = index % 7;
                         var daily_events = $("#calendar_table tr").eq(rowIndex).find('td').eq(colIndex).find("div").find("ul");
                         // console.log(daily_events);
-                        daily_events.append('<li class="list-group-item" val="'+ eve_item['eve_id'] +'">'+ time_str + ' ' + eve_item['title'] +'</li>')
+                        daily_events.append('<li class="list-group-item" val="'+ eve_item['eve_id'] +'" lat="'+eve_item['latitude']+'" lng="'+eve_item['longitude']+'">'+ time_str + ' ' + eve_item['title'] +'</li>')
                     });
                 }
             });

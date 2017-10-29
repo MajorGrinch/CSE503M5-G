@@ -8,7 +8,7 @@ if(!isset($_SESSION['user'])){
 $username = $_SESSION['user'];
 $userid = (int)$_SESSION['userid'];
 
-$stmt = $mysqli->prepare("select eve_id, title, eve_date from events where userid=?");
+$stmt = $mysqli->prepare("select eve_id, title, eve_date, latitude, longitude from events where userid=?");
 
 if (!$stmt) {
     printf("Query Prep Failed: %s\n", $mysqli->error);

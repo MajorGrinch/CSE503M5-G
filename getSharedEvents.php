@@ -8,7 +8,7 @@ if(!isset($_SESSION['userid'])){
 
 $userid = (int)$_SESSION['userid'];
 
-$stmt = $mysqli->prepare("select events.eve_id, title, eve_date, src_userid, username from events join sharelist on events.eve_id=sharelist.eve_id join users on events.userid=users.userid where dst_userid=? and is_group=0");
+$stmt = $mysqli->prepare("select events.eve_id, title, eve_date, src_userid, username, latitude, longitude from events join sharelist on events.eve_id=sharelist.eve_id join users on events.userid=users.userid where dst_userid=? and is_group=0");
 
 if (!$stmt) {
     printf("Query Prep Failed: %s\n", $mysqli->error);

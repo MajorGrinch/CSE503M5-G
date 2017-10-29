@@ -43,7 +43,8 @@
 
 #calendar_table td{
 	height: 100px;
+}
 
-
-
+#map{
+	height: 300px;
 }

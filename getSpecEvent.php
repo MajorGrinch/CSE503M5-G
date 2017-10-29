@@ -4,7 +4,7 @@ require 'database.php';
 
 if (isset($_POST['eve_id']) && isset($_SESSION['userid'])) {
     $eve_id = (int) $_POST['eve_id'];
-    $stmt   = $mysqli->prepare("select eve_id, title, eve_date, eve_content from events where eve_id=?");
+    $stmt   = $mysqli->prepare("select eve_id, title, eve_date, eve_content, latitude, longitude from events where eve_id=?");
     if (!$stmt) {
         printf("Query Prep Failed: %s\n", $mysqli->error);
         exit;
