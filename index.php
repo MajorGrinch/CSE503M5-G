@@ -49,6 +49,7 @@ session_start();
         </div>
         <div id="wrapper">
             <div id="calendar">
+                <h1 id="calendar_month"></h1>
                 <table id="calendar_table">
                     <thead>
                         <th width="14%" >Sun</th>
@@ -818,7 +819,13 @@ session_start();
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     function updateCalendar() {
+        var cal_mon = document.getElementById('calendar_month');
+        var month = current_month.month;
+        var year = current_month.year;
+        var month_str = months[month] + ' ' + year;
+        cal_mon.innerHTML = month_str;
         console.log(current_month.getDateObject(20));
         var cal_tb = document.getElementById("calendar_table_body");
         var weeks = current_month.getWeeks();
