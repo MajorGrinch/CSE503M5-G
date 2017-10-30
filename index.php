@@ -303,6 +303,7 @@ session_start();
 
     var latitude = 0.0;
     var longitude = 0.0;
+    var token = "";
 
 
     $('#choose_event_place_btn').click(function(){
@@ -393,7 +394,8 @@ session_start();
                     eve_date: date_str,
                     eve_id: eve_id,
                     lat: latitude,
-                    lng: longitude
+                    lng: longitude,
+                    token: token
                 })
         .done(function(data){
             console.log(data);
@@ -409,9 +411,9 @@ session_start();
 
     $('#del_event_btn').click(function(){
         var eve_id = $('#edit_event_id').val();
-        $.post("delSpecEvent.php", {eve_id: eve_id})
+        $.post("delSpecEvent.php", {eve_id: eve_id, token: token})
         .done(function(data){
-            // console.log(data);
+            console.log(data);
             var jsonobj = jQuery.parseJSON(data);
             if(jsonobj['status'] == 'success'){
                 alert('Delete Successfully!');
@@ -669,6 +671,7 @@ session_start();
                     $("#sidebar").append('<div id="account_mgr" class="btn-group-vertical"><button type="button" class="btn btn-secondary btn-lg" id="myEvent">My Event</button><button type="button" class="btn btn-secondary btn-lg" id="logout">Log out</button></div>');
                     $("#welcome_title").text("Welcome, " + jsonobj['username']);
                     initUserEvents();
+                    token = jsonobj['token'];
                 }
                 else{
                     alert("Sign in failed! Please check your username or Password");

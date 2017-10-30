@@ -22,10 +22,10 @@ if (isset($_POST['username']) && isset($_POST['passwordInput'])) {
         $_SESSION['user']   = $username;
         $_SESSION['userid'] = $userid;
         $_SESSION['token']  = bin2hex(openssl_random_pseudo_bytes(32));
-        $result_array = array('status' => 'success', 'username'=> $username);
+        $result_array = array('status' => 'success', 'username'=> $username, 'token'=>$_SESSION['token']);
         print(json_encode($result_array));
     } else {
-        $result_array = array('status' => 'fail' );
+        $result_array = array('status' => 'fail');
         print(json_encode($result_array));
     }
     $stmt->close();

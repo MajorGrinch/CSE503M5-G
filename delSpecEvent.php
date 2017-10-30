@@ -3,7 +3,9 @@ ini_set("session.cookie_httponly", 1);
 session_start();
 
 require 'database.php';
-
+if(!hash_equals($_SESSION['token'], $_POST['token'])){
+    die("Request forgery detected");
+}
 if (isset($_POST['eve_id']) && isset($_SESSION['userid'])) {
     $eve_id = (int) $_POST['eve_id'];
     $userid = (int)$_SESSION['userid'];
